@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'screens/kalendar_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,8 +16,25 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'F1Pass',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.red,
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.black,
+          selectedItemColor: Colors.redAccent,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+        ),
+        cardColor: const Color(0xFF121212),
       ),
       home: const RootScreen(),
     );
@@ -31,24 +52,17 @@ class _RootScreenState extends State<RootScreen> {
   int _index = 0;
 
   final List<Widget> _pages = const [
-    _HomePage(),
-    _SearchPage(),
-    _ProfilePage(),
+    HomeScreen(),
+    SearchScreen(),
+    ProfileScreen(),
   ];
 
-  final List<String> _titles = const [
-    'Home',
-    'Search',
-    'Profile',
-  ];
+  final List<String> _titles = const ['Home', 'Search', 'Profile'];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const _LogoTitle(),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const _LogoTitle(), centerTitle: true),
       body: _pages[_index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
@@ -63,33 +77,6 @@ class _RootScreenState extends State<RootScreen> {
   }
 }
 
-class _HomePage extends StatelessWidget {
-  const _HomePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Home'));
-  }
-}
-
-class _SearchPage extends StatelessWidget {
-  const _SearchPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Search'));
-  }
-}
-
-class _ProfilePage extends StatelessWidget {
-  const _ProfilePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Profile'));
-  }
-}
-
 class _LogoTitle extends StatelessWidget {
   const _LogoTitle();
 
@@ -100,10 +87,7 @@ class _LogoTitle extends StatelessWidget {
       children: const [
         Icon(Icons.sports_motorsports, size: 24),
         SizedBox(width: 8),
-        Text(
-          'F1Pass',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        Text('F1Pass', style: TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
   }
