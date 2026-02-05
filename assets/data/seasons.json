@@ -18,7 +18,11 @@
         "city": "Sakhir",
         "country": "Bahrain",
         "date": "2025-03-10",
-        "hasSprint": false
+        "hasSprint": false,
+        "results": [
+          { "driverId": "ver", "position": 1, "points": 25 },
+          { "driverId": "ham", "position": 2, "points": 18 }
+        ]
       },
       {
         "id": "jed",
@@ -28,7 +32,15 @@
         "city": "Jeddah",
         "country": "Saudi Arabia",
         "date": "2025-03-24",
-        "hasSprint": true
+        "hasSprint": true,
+        "sprintResults": [
+          { "driverId": "ver", "position": 1, "points": 8 },
+          { "driverId": "ham", "position": 2, "points": 7 }
+        ],
+        "results": [
+          { "driverId": "ver", "position": 1, "points": 25 },
+          { "driverId": "ham", "position": 3, "points": 15 }
+        ]
       }
     ]
   }
