@@ -1,0 +1,35 @@
+[
+  {
+    "year": 2025,
+    "drivers": [
+      { "id": "ham", "name": "Lewis Hamilton", "teamId": "mer", "points": 0 },
+      { "id": "ver", "name": "Max Verstappen", "teamId": "rb", "points": 0 }
+    ],
+    "teams": [
+      { "id": "mer", "name": "Mercedes", "points": 0 },
+      { "id": "rb", "name": "Red Bull Racing", "points": 0 }
+    ],
+    "races": [
+      {
+        "id": "bah",
+        "seasonYear": 2025,
+        "name": "Bahrain Grand Prix",
+        "circuitName": "Bahrain International Circuit",
+        "city": "Sakhir",
+        "country": "Bahrain",
+        "date": "2025-03-10",
+        "hasSprint": false
+      },
+      {
+        "id": "jed",
+        "seasonYear": 2025,
+        "name": "Saudi Arabian Grand Prix",
+        "circuitName": "Jeddah Corniche Circuit",
+        "city": "Jeddah",
+        "country": "Saudi Arabia",
+        "date": "2025-03-24",
+        "hasSprint": true
+      }
+    ]
+  }
+]
