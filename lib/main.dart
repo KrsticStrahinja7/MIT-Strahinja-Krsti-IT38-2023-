@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/cart_provider.dart';
 import 'providers/seasons_provider.dart';
-import 'screens/kalendar_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/cart_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/profile_screen.dart';
@@ -17,6 +20,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => SeasonsProvider()..load()),
       ],
       child: MaterialApp(
@@ -68,8 +73,48 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = context.select<AuthProvider, bool>((p) => p.isLoggedIn);
+    final cartCount = context.select<CartProvider, int>((p) => p.totalItems);
+
     return Scaffold(
-      appBar: AppBar(title: const _LogoTitle(), centerTitle: true),
+      appBar: AppBar(
+        title: const _LogoTitle(),
+        centerTitle: true,
+        actions: [
+          if (!isLoggedIn)
+            TextButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+              },
+              child: const Text('Login'),
+            )
+          else ...[
+            IconButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+              },
+              icon: Badge(
+                isLabelVisible: cartCount > 0,
+                label: Text('$cartCount'),
+                child: const Icon(Icons.shopping_cart_outlined),
+              ),
+              tooltip: 'Korpa',
+            ),
+            IconButton(
+              onPressed: () {
+                context.read<AuthProvider>().logout();
+                context.read<CartProvider>().clear();
+              },
+              icon: const Icon(Icons.logout),
+              tooltip: 'Logout',
+            ),
+          ],
+        ],
+      ),
       body: _pages[_index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,

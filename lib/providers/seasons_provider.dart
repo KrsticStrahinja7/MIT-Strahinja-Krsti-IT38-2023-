@@ -23,6 +23,7 @@ class SeasonsProvider extends ChangeNotifier {
       final loaded = await _service.loadSeasons();
       _seasons = loaded.map(_withComputedStandings).toList();
       if (_seasons.isNotEmpty) {
+        _seasons.sort((a, b) => b.year.compareTo(a.year));
         _active = _seasons.first;
       }
     } catch (e) {
