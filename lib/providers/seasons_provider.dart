@@ -44,7 +44,7 @@ class SeasonsProvider extends ChangeNotifier {
     const sprintPoints = [8, 7, 6, 5, 4, 3, 2, 1];
 
     final Map<String, int> driverPoints = {for (final d in s.drivers) d.id: 0};
-    // helper for team by driver
+
     final Map<String, String> driverTeam = {
       for (final d in s.drivers) d.id: d.teamId,
     };
