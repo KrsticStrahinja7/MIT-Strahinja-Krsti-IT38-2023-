@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
+import 'checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -47,7 +48,15 @@ class CartScreen extends StatelessWidget {
                       ),
                     ),
                     FilledButton(
-                      onPressed: cart.items.isEmpty ? null : () {},
+                      onPressed: cart.items.isEmpty
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const CheckoutScreen(),
+                                ),
+                              );
+                            },
                       child: const Text('Checkout'),
                     ),
                   ],
