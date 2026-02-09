@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
+import 'providers/orders_provider.dart';
 import 'providers/seasons_provider.dart';
+import 'providers/wishlist_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/cart_screen.dart';
+import 'screens/admin_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/profile_screen.dart';
@@ -22,6 +25,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => OrdersProvider()),
+        ChangeNotifierProvider(create: (_) => WishlistProvider()),
         ChangeNotifierProvider(create: (_) => SeasonsProvider()..load()),
       ],
       child: MaterialApp(
@@ -63,18 +68,33 @@ class RootScreen extends StatefulWidget {
 class _RootScreenState extends State<RootScreen> {
   int _index = 0;
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    SearchScreen(),
-    ProfileScreen(),
-  ];
-
-  final List<String> _titles = const ['Home', 'Search', 'Profile'];
-
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = context.select<AuthProvider, bool>((p) => p.isLoggedIn);
+    final isAdmin = context.select<AuthProvider, bool>((p) => p.isAdmin);
     final cartCount = context.select<CartProvider, int>((p) => p.totalItems);
+
+    final pages = <Widget>[
+      const HomeScreen(),
+      const SearchScreen(),
+      const ProfileScreen(),
+      if (isAdmin) const AdminScreen(),
+    ];
+
+    final items = <BottomNavigationBarItem>[
+      const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+      const BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+      const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      if (isAdmin)
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.admin_panel_settings),
+          label: 'Admin',
+        ),
+    ];
+
+    if (_index >= pages.length) {
+      _index = pages.length - 1;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -108,6 +128,8 @@ class _RootScreenState extends State<RootScreen> {
               onPressed: () {
                 context.read<AuthProvider>().logout();
                 context.read<CartProvider>().clear();
+                context.read<OrdersProvider>().clear();
+                context.read<WishlistProvider>().clear();
               },
               icon: const Icon(Icons.logout),
               tooltip: 'Logout',
@@ -115,15 +137,11 @@ class _RootScreenState extends State<RootScreen> {
           ],
         ],
       ),
-      body: _pages[_index],
+      body: pages[_index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+        items: items,
       ),
     );
   }

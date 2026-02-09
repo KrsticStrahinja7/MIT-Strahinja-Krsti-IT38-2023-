@@ -77,26 +77,22 @@ class _RaceDetailScreenState extends State<RaceDetailScreen> {
                   const SizedBox(height: 8),
                   if (race.hasSprint) const Chip(label: Text('Sprint vikend')),
                   const SizedBox(height: 16),
-                  Text(
-                    'Karta',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  Text('Karta', style: Theme.of(context).textTheme.titleMedium),
                   if (_isPastRace) ...[
                     const SizedBox(height: 8),
                     Text(
                       'Ova trka je već prošla. Kupovina karata nije dostupna.',
                       style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .error
-                            .withValues(alpha: 0.95),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.error.withValues(alpha: 0.95),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _sector,
+                    initialValue: _sector,
                     decoration: const InputDecoration(
                       labelText: 'Sektor',
                       border: OutlineInputBorder(),
@@ -105,12 +101,15 @@ class _RaceDetailScreenState extends State<RaceDetailScreen> {
                         .map(
                           (e) => DropdownMenuItem(
                             value: e.key,
-                            child: Text('Sektor ${e.key} ( ${e.value.toStringAsFixed(2)} / dan )'),
+                            child: Text(
+                              'Sektor ${e.key} ( ${e.value.toStringAsFixed(2)} / dan )',
+                            ),
                           ),
                         )
                         .toList(),
-                    onChanged:
-                        _isPastRace ? null : (v) => setState(() => _sector = v),
+                    onChanged: _isPastRace
+                        ? null
+                        : (v) => setState(() => _sector = v),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -125,8 +124,9 @@ class _RaceDetailScreenState extends State<RaceDetailScreen> {
                         ChoiceChip(
                           label: Text('$d'),
                           selected: _days == d,
-                          onSelected:
-                              _isPastRace ? null : (_) => setState(() => _days = d),
+                          onSelected: _isPastRace
+                              ? null
+                              : (_) => setState(() => _days = d),
                         ),
                     ],
                   ),
@@ -145,29 +145,30 @@ class _RaceDetailScreenState extends State<RaceDetailScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: (_isPastRace || _sector == null || _days == null)
+                      onPressed:
+                          (_isPastRace || _sector == null || _days == null)
                           ? null
                           : () {
-                        final auth = context.read<AuthProvider>();
-                        if (!auth.isLoggedIn) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
-                            ),
-                          );
-                          return;
-                        }
-                        final total = _totalPrice ?? 0;
-                        context.read<CartProvider>().addItem(
-                              title:
-                                  'Karta: ${race.name} • Sektor $_sector • ${_days}d',
-                              price: total,
-                              quantity: 1,
-                            );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Dodato u korpu')),
-                        );
-                      },
+                              final auth = context.read<AuthProvider>();
+                              if (!auth.isLoggedIn) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
+                                  ),
+                                );
+                                return;
+                              }
+                              final total = _totalPrice ?? 0;
+                              context.read<CartProvider>().addItem(
+                                title:
+                                    'Karta: ${race.name} • Sektor $_sector • ${_days}d',
+                                price: total,
+                                quantity: 1,
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Dodato u korpu')),
+                              );
+                            },
                       icon: const Icon(Icons.shopping_cart_outlined),
                       label: const Text('Dodaj u korpu'),
                     ),

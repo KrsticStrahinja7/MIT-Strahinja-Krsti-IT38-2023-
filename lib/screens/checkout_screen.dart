@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
+import '../providers/orders_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -105,6 +106,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (confirmed != true) return;
 
+    final orderItems = [
+      for (final it in cart.items)
+        OrderItem(title: it.title, price: it.price, quantity: it.quantity),
+    ];
+    context.read<OrdersProvider>().addOrder(
+      items: orderItems,
+      totalPrice: cart.totalPrice,
+    );
+
     cart.clear();
 
     if (!mounted) return;
@@ -139,7 +149,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${cart.totalPrice.toStringAsFixed(2)}',
+                      cart.totalPrice.toStringAsFixed(2),
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
