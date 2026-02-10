@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
+import 'providers/navigation_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/seasons_provider.dart';
 import 'providers/wishlist_provider.dart';
@@ -12,7 +19,35 @@ import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/profile_screen.dart';
 
-void main() {
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  try {
+    await FirebaseMessaging.instance.requestPermission();
+  } catch (_) {
+    // ignore
+  }
+
+  if (kDebugMode) {
+    final host = kIsWeb
+        ? 'localhost'
+        : (defaultTargetPlatform == TargetPlatform.android
+            ? '10.0.2.2'
+            : 'localhost');
+    FirebaseAuth.instance.useAuthEmulator(host, 9099);
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+  }
   runApp(const MyApp());
 }
 
@@ -24,9 +59,24 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
-        ChangeNotifierProvider(create: (_) => OrdersProvider()),
-        ChangeNotifierProvider(create: (_) => WishlistProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, OrdersProvider>(
+          create: (_) => OrdersProvider(),
+          update: (_, auth, orders) {
+            final p = orders ?? OrdersProvider();
+            p.setUser(uid: auth.uid, isAdmin: auth.isAdmin);
+            return p;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
+          create: (_) => WishlistProvider(),
+          update: (_, auth, wishlist) {
+            final p = wishlist ?? WishlistProvider();
+            p.setUser(auth.uid);
+            return p;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => SeasonsProvider()..load()),
       ],
       child: MaterialApp(
@@ -66,13 +116,12 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> {
-  int _index = 0;
-
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = context.select<AuthProvider, bool>((p) => p.isLoggedIn);
     final isAdmin = context.select<AuthProvider, bool>((p) => p.isAdmin);
     final cartCount = context.select<CartProvider, int>((p) => p.totalItems);
+    final navIndex = context.select<NavigationProvider, int>((p) => p.index);
 
     final pages = <Widget>[
       const HomeScreen(),
@@ -92,8 +141,12 @@ class _RootScreenState extends State<RootScreen> {
         ),
     ];
 
-    if (_index >= pages.length) {
-      _index = pages.length - 1;
+    final effectiveIndex = navIndex >= pages.length ? 0 : navIndex;
+    if (effectiveIndex != navIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        context.read<NavigationProvider>().setIndex(effectiveIndex);
+      });
     }
 
     return Scaffold(
@@ -125,8 +178,10 @@ class _RootScreenState extends State<RootScreen> {
               tooltip: 'Korpa',
             ),
             IconButton(
-              onPressed: () {
-                context.read<AuthProvider>().logout();
+              onPressed: () async {
+                await context.read<AuthProvider>().logout();
+                if (!context.mounted) return;
+                context.read<NavigationProvider>().reset();
                 context.read<CartProvider>().clear();
                 context.read<OrdersProvider>().clear();
                 context.read<WishlistProvider>().clear();
@@ -137,10 +192,10 @@ class _RootScreenState extends State<RootScreen> {
           ],
         ],
       ),
-      body: pages[_index],
+      body: pages[effectiveIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
+        currentIndex: effectiveIndex,
+        onTap: (i) => context.read<NavigationProvider>().setIndex(i),
         items: items,
       ),
     );

@@ -3,6 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../providers/orders_provider.dart';
 import 'admin_order_detail_screen.dart';
+import 'admin_drivers_screen.dart';
+import 'admin_races_screen.dart';
+import 'admin_season_roster_screen.dart';
+import 'admin_teams_screen.dart';
+import 'admin_comments_screen.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -36,19 +41,62 @@ class AdminScreen extends StatelessWidget {
                     title: const Text('Upravljanje trkama'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Trke')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AdminRacesScreen(),
+                        ),
                       );
                     },
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.confirmation_number_outlined),
-                    title: const Text('Upravljanje kartama'),
+                    leading: const Icon(Icons.people_outline),
+                    title: const Text('Upravljanje vozačima'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Karte')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AdminDriversScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.groups_2_outlined),
+                    title: const Text('Upravljanje timovima'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AdminTeamsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.swap_horiz_outlined),
+                    title: const Text('Sezonski roster (vozač -> tim)'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AdminSeasonRosterScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.chat_bubble_outline),
+                    title: const Text('Upravljanje komentarima'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AdminCommentsScreen(),
+                        ),
                       );
                     },
                   ),

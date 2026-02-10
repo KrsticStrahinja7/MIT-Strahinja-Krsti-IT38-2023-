@@ -60,6 +60,7 @@ class SeasonDetailScreen extends StatelessWidget {
 
   Widget _buildDriversTable(Season s) {
     final rows = s.drivers..sort((a, b) => b.points.compareTo(a.points));
+    final teamNameById = {for (final t in s.teams) t.id: t.name};
     return DataTable(
       columns: const [
         DataColumn(label: Text('#')),
@@ -73,7 +74,7 @@ class SeasonDetailScreen extends StatelessWidget {
             cells: [
               DataCell(Text('${i + 1}')),
               DataCell(Text(rows[i].name)),
-              DataCell(Text(rows[i].teamId.toUpperCase())),
+              DataCell(Text(teamNameById[rows[i].teamId] ?? rows[i].teamId)),
               DataCell(Text(rows[i].points.toString())),
             ],
           ),

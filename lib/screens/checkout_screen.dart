@@ -110,12 +110,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       for (final it in cart.items)
         OrderItem(title: it.title, price: it.price, quantity: it.quantity),
     ];
-    context.read<OrdersProvider>().addOrder(
-      items: orderItems,
-      totalPrice: cart.totalPrice,
-    );
-
-    cart.clear();
+    try {
+      await context.read<OrdersProvider>().addOrder(
+            items: orderItems,
+            totalPrice: cart.totalPrice,
+          );
+      cart.clear();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Plaćanje nije uspelo: $e')),
+      );
+      return;
+    }
 
     if (!mounted) return;
     ScaffoldMessenger.of(

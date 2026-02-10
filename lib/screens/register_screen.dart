@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/navigation_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -187,17 +188,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final ok = _formKey.currentState?.validate() ?? false;
                     if (!ok) return;
 
-                    context.read<AuthProvider>().register(
-                          firstName: _firstNameCtrl.text.trim(),
-                          lastName: _lastNameCtrl.text.trim(),
-                          email: _emailCtrl.text.trim(),
-                          phone: _phoneCtrl.text.trim(),
-                        );
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    try {
+                      await context.read<AuthProvider>().register(
+                            firstName: _firstNameCtrl.text.trim(),
+                            lastName: _lastNameCtrl.text.trim(),
+                            email: _emailCtrl.text.trim(),
+                            phone: _phoneCtrl.text.trim(),
+                            password: _passCtrl.text,
+                          );
+                      if (!context.mounted) return;
+                      context.read<NavigationProvider>().reset();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Registracija nije uspela: $e')),
+                      );
+                    }
                   },
                   child: const Text('Kreiraj nalog'),
                 ),

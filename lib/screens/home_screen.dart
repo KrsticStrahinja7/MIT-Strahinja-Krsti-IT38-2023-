@@ -76,6 +76,15 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
+          Card(
+            elevation: 0,
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              'assets/images/f1.jpg',
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 18),
           Text(
             'Istorijat Formule 1',
             style: Theme.of(

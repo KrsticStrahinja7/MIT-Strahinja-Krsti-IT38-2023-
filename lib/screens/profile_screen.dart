@@ -48,6 +48,18 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _InfoRow(label: 'Telefon', value: auth.phone ?? '-'),
             const SizedBox(height: 16),
+            Card(
+              elevation: 0,
+              child: SwitchListTile(
+                title: const Text('Race day obaveštenja'),
+                subtitle: const Text(
+                  'Dobićeš push notifikaciju na dan kada je trka.',
+                ),
+                value: auth.raceDayNotifications,
+                onChanged: (v) => auth.setRaceDayNotifications(v),
+              ),
+            ),
+            const SizedBox(height: 16),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               childrenPadding: EdgeInsets.zero,

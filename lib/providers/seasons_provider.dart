@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../models/season.dart';
-import '../services/seasons_service.dart';
+import '../services/season_firestore_service.dart';
 
 class SeasonsProvider extends ChangeNotifier {
-  final _service = SeasonsService();
+  final _service = SeasonFirestoreService();
 
   List<Season> _seasons = [];
   Season? _active;
@@ -20,7 +20,11 @@ class SeasonsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      final loaded = await _service.loadSeasons();
+      final years = await _service.listSeasonYears();
+      final loaded = <Season>[];
+      for (final y in years) {
+        loaded.add(await _service.loadSeason(y));
+      }
       _seasons = loaded.map(_withComputedStandings).toList();
       if (_seasons.isNotEmpty) {
         _seasons.sort((a, b) => b.year.compareTo(a.year));
