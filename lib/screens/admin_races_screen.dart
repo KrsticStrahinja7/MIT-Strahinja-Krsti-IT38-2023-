@@ -434,11 +434,13 @@ class _RaceResultsDialog extends StatefulWidget {
 }
 
 class _RaceResultsDialogState extends State<_RaceResultsDialog> {
-  final List<Map<String, dynamic>> _rows = [];
+  final List<Map<String, dynamic>> _raceRows = [];
+  final List<Map<String, dynamic>> _sprintRows = [];
   bool _saving = false;
 
   late final int? _seasonYear;
   late final String _raceDateStr;
+  late final bool _hasSprint;
   Map<String, String> _rosterDriverTeam = const {};
   Map<String, String> _rosterDriverName = const {};
 
@@ -447,25 +449,51 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
     super.initState();
     _seasonYear = (widget.initial['seasonYear'] as num?)?.toInt();
     _raceDateStr = (widget.initial['date'] as String?) ?? '';
+    _hasSprint = (widget.initial['hasSprint'] as bool?) ?? false;
     const racePoints = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+    const sprintPoints = [8, 7, 6, 5, 4, 3, 2, 1];
 
-    final existing = (widget.initial['results'] as List?) ?? const [];
-    final Map<int, Map<String, dynamic>> byPos = {};
-    for (final e in existing) {
+    final existingRace = (widget.initial['results'] as List?) ?? const [];
+    final Map<int, Map<String, dynamic>> raceByPos = {};
+    for (final e in existingRace) {
       final m = Map<String, dynamic>.from(e as Map);
       final pos = (m['position'] as num?)?.toInt();
       if (pos != null && pos >= 1 && pos <= 20) {
-        byPos[pos] = m;
+        raceByPos[pos] = m;
       }
     }
 
-    _rows.clear();
+    _raceRows.clear();
     for (int pos = 1; pos <= 20; pos++) {
-      final m = byPos[pos] ?? const <String, dynamic>{};
+      final m = raceByPos[pos] ?? const <String, dynamic>{};
       final points = (pos >= 1 && pos <= racePoints.length)
           ? racePoints[pos - 1]
           : 0;
-      _rows.add({
+      _raceRows.add({
+        'driverId': (m['driverId'] as String?) ?? '',
+        'driverName': (m['driverName'] as String?) ?? '',
+        'position': pos,
+        'points': points,
+      });
+    }
+
+    final existingSprint = (widget.initial['sprintResults'] as List?) ?? const [];
+    final Map<int, Map<String, dynamic>> sprintByPos = {};
+    for (final e in existingSprint) {
+      final m = Map<String, dynamic>.from(e as Map);
+      final pos = (m['position'] as num?)?.toInt();
+      if (pos != null && pos >= 1 && pos <= 20) {
+        sprintByPos[pos] = m;
+      }
+    }
+
+    _sprintRows.clear();
+    for (int pos = 1; pos <= 20; pos++) {
+      final m = sprintByPos[pos] ?? const <String, dynamic>{};
+      final points = (pos >= 1 && pos <= sprintPoints.length)
+          ? sprintPoints[pos - 1]
+          : 0;
+      _sprintRows.add({
         'driverId': (m['driverId'] as String?) ?? '',
         'driverName': (m['driverName'] as String?) ?? '',
         'position': pos,
@@ -510,6 +538,22 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
     return true;
   }
 
+  bool _allDriversEmpty(List<Map<String, dynamic>> rows) {
+    for (final r in rows) {
+      final driverId = (r['driverId'] as String?)?.trim() ?? '';
+      if (driverId.isNotEmpty) return false;
+    }
+    return true;
+  }
+
+  bool _anyDriversEmpty(List<Map<String, dynamic>> rows) {
+    for (final r in rows) {
+      final driverId = (r['driverId'] as String?)?.trim() ?? '';
+      if (driverId.isEmpty) return true;
+    }
+    return false;
+  }
+
   Future<void> _save() async {
     if (!_canSaveByDate()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -552,14 +596,14 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
       return;
     }
 
-    final clean = <Map<String, dynamic>>[];
-    final Set<String> usedDrivers = {};
-    for (final r in _rows) {
+    final cleanRace = <Map<String, dynamic>>[];
+    final Set<String> usedRaceDrivers = {};
+    for (final r in _raceRows) {
       if (!_validRow(r)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Popuni sva polja za rezultate (vozač iz rostera, pozicija, poeni).',
+              'Popuni sva polja za rezultate glavne trke (vozač iz rostera, pozicija, poeni).',
             ),
           ),
         );
@@ -567,17 +611,17 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
       }
 
       final driverId = (r['driverId'] as String).trim();
-      if (usedDrivers.contains(driverId)) {
+      if (usedRaceDrivers.contains(driverId)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Vozač ne može biti izabran više puta.')),
         );
         return;
       }
-      usedDrivers.add(driverId);
+      usedRaceDrivers.add(driverId);
 
       final teamId = _rosterDriverTeam[driverId] ?? '';
       final driverName = (_rosterDriverName[driverId] ?? '').trim();
-      clean.add({
+      cleanRace.add({
         'driverId': driverId,
         'driverName': driverName,
         'teamId': teamId,
@@ -586,7 +630,65 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
       });
     }
 
-    clean.sort((a, b) => (a['position'] as int).compareTo(b['position'] as int));
+    cleanRace
+        .sort((a, b) => (a['position'] as int).compareTo(b['position'] as int));
+
+    List<Map<String, dynamic>> cleanSprint = const [];
+    if (_hasSprint) {
+      if (!_allDriversEmpty(_sprintRows) && _anyDriversEmpty(_sprintRows)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Sprint rezultati: ili izaberi vozače za sve pozicije, ili ostavi sprint prazan.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (!_allDriversEmpty(_sprintRows)) {
+        final tmp = <Map<String, dynamic>>[];
+        final Set<String> usedSprintDrivers = {};
+        for (final r in _sprintRows) {
+          if (!_validRow(r)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Popuni sva polja za sprint rezultate (vozač iz rostera, pozicija, poeni).',
+                ),
+              ),
+            );
+            return;
+          }
+
+          final driverId = (r['driverId'] as String).trim();
+          if (usedSprintDrivers.contains(driverId)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Vozač ne može biti izabran više puta (sprint).'),
+              ),
+            );
+            return;
+          }
+          usedSprintDrivers.add(driverId);
+
+          final teamId = _rosterDriverTeam[driverId] ?? '';
+          final driverName = (_rosterDriverName[driverId] ?? '').trim();
+          tmp.add({
+            'driverId': driverId,
+            'driverName': driverName,
+            'teamId': teamId,
+            'position': r['position'] as int,
+            'points': r['points'] as int,
+          });
+        }
+
+        tmp.sort(
+          (a, b) => (a['position'] as int).compareTo(b['position'] as int),
+        );
+        cleanSprint = tmp;
+      }
+    }
 
     setState(() => _saving = true);
     try {
@@ -594,7 +696,10 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
 
       final seasonRef = db.collection('seasons').doc('$seasonYear');
 
-      final teamIds = clean.map((e) => e['teamId'] as String).toSet().toList();
+      final teamIds = [...cleanRace, ...cleanSprint]
+          .map((e) => e['teamId'] as String)
+          .toSet()
+          .toList();
       Map<String, String> teamNames = {};
       if (teamIds.isNotEmpty) {
         final teamSnap = await db
@@ -608,7 +713,7 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
       }
 
       final batch = db.batch();
-      for (final r in clean) {
+      for (final r in [...cleanRace, ...cleanSprint]) {
         final driverId = r['driverId'] as String;
         final teamId = r['teamId'] as String;
         final driverName = (r['driverName'] as String?) ?? driverId;
@@ -641,7 +746,8 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
 
       await db.collection('races').doc(widget.raceId).set(
         {
-          'results': clean,
+          'results': cleanRace,
+          if (_hasSprint) 'sprintResults': cleanSprint,
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -654,7 +760,8 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
           .doc(widget.raceId)
           .set(
         {
-          'results': clean,
+          'results': cleanRace,
+          if (_hasSprint) 'sprintResults': cleanSprint,
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -672,12 +779,80 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
     final rosterIds = _rosterDriverTeam.keys.toList()..sort();
     final canSaveByDate = _canSaveByDate();
 
+    Widget buildRows(List<Map<String, dynamic>> rows) {
+      return Column(
+        children: [
+          for (int i = 0; i < rows.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 7,
+                    child: DropdownButtonFormField<String>(
+                      initialValue:
+                          ((rows[i]['driverId'] as String?) ?? '').isEmpty
+                              ? null
+                              : (rows[i]['driverId'] as String),
+                      items: [
+                        for (final id in rosterIds)
+                          DropdownMenuItem(
+                            value: id,
+                            child: Text(_rosterDriverName[id] ?? id),
+                          ),
+                      ],
+                      onChanged: _rosterDriverTeam.isEmpty
+                          ? null
+                          : (v) => setState(() {
+                                rows[i]['driverId'] = v ?? '';
+                              }),
+                      decoration: const InputDecoration(
+                        labelText: 'Vozač',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Pozicija',
+                        border: OutlineInputBorder(),
+                      ),
+                      child: Text(
+                        ((rows[i]['position'] as int?) ?? 0).toString(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Poeni',
+                        border: OutlineInputBorder(),
+                      ),
+                      child: Text(
+                        ((rows[i]['points'] as int?) ?? 0).toString(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      );
+    }
+
     return AlertDialog(
-      title: const Text('Rezultati trke'),
+      title: const Text('Rezultati'),
       content: SizedBox(
         width: 620,
-        child: SingleChildScrollView(
+        child: DefaultTabController(
+          length: _hasSprint ? 2 : 1,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (!canSaveByDate)
                 Padding(
@@ -698,65 +873,22 @@ class _RaceResultsDialogState extends State<_RaceResultsDialog> {
                     'Roster za sezonu je prazan. Dodaj vozače u sezoni u Admin -> Sezonski roster.',
                   ),
                 ),
-              for (int i = 0; i < _rows.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 7,
-                        child: DropdownButtonFormField<String>(
-                          initialValue:
-                              ((_rows[i]['driverId'] as String?) ?? '').isEmpty
-                                  ? null
-                                  : (_rows[i]['driverId'] as String),
-                          items: [
-                            for (final id in rosterIds)
-                              DropdownMenuItem(
-                                value: id,
-                                child: Text(_rosterDriverName[id] ?? id),
-                              ),
-                          ],
-                          onChanged: _rosterDriverTeam.isEmpty
-                              ? null
-                              : (v) => setState(() {
-                                    _rows[i]['driverId'] = v ?? '';
-                                  }),
-                          decoration: const InputDecoration(
-                            labelText: 'Vozač',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Pozicija',
-                            border: OutlineInputBorder(),
-                          ),
-                          child: Text(
-                            ((_rows[i]['position'] as int?) ?? 0).toString(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Poeni',
-                            border: OutlineInputBorder(),
-                          ),
-                          child: Text(
-                            ((_rows[i]['points'] as int?) ?? 0).toString(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              TabBar(
+                tabs: [
+                  const Tab(text: 'Glavna trka'),
+                  if (_hasSprint) const Tab(text: 'Sprint'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: TabBarView(
+                  children: [
+                    SingleChildScrollView(child: buildRows(_raceRows)),
+                    if (_hasSprint)
+                      SingleChildScrollView(child: buildRows(_sprintRows)),
+                  ],
                 ),
+              ),
             ],
           ),
         ),

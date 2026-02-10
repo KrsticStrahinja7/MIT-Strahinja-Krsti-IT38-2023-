@@ -5,7 +5,8 @@ class AdminSeasonRosterScreen extends StatefulWidget {
   const AdminSeasonRosterScreen({super.key});
 
   @override
-  State<AdminSeasonRosterScreen> createState() => _AdminSeasonRosterScreenState();
+  State<AdminSeasonRosterScreen> createState() =>
+      _AdminSeasonRosterScreenState();
 }
 
 class _AdminSeasonRosterScreenState extends State<AdminSeasonRosterScreen> {
@@ -104,7 +105,9 @@ class _SeasonRosterList extends StatelessWidget {
                 child: ListTile(
                   leading: const Icon(Icons.person_outline),
                   title: Text((d.data()['name'] as String?) ?? d.id),
-                  subtitle: Text('driverId: ${d.id} • teamId: ${(d.data()['teamId'] as String?) ?? ''}'),
+                  subtitle: Text(
+                    'driverId: ${d.id} • teamId: ${(d.data()['teamId'] as String?) ?? ''}',
+                  ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (v) async {
                       if (v == 'edit') {
@@ -123,11 +126,13 @@ class _SeasonRosterList extends StatelessWidget {
                             content: const Text('Ukloniti vozača iz sezone?'),
                             actions: [
                               TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
                                 child: const Text('Otkaži'),
                               ),
                               FilledButton(
-                                onPressed: () => Navigator.of(context).pop(true),
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
                                 child: const Text('Ukloni'),
                               ),
                             ],
@@ -161,7 +166,11 @@ class _RosterAddDialog extends StatefulWidget {
   final int seasonYear;
   final String? driverId;
   final Map<String, dynamic>? initial;
-  const _RosterAddDialog({required this.seasonYear, this.driverId, this.initial});
+  const _RosterAddDialog({
+    required this.seasonYear,
+    this.driverId,
+    this.initial,
+  });
 
   static Future<void> show(
     BuildContext context, {
@@ -205,35 +214,26 @@ class _RosterAddDialogState extends State<_RosterAddDialog> {
       final db = FirebaseFirestore.instance;
       final seasonRef = db.collection('seasons').doc('${widget.seasonYear}');
 
-      await seasonRef.set(
-        {
-          'year': widget.seasonYear,
-          'updatedAt': FieldValue.serverTimestamp(),
-          'createdAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await seasonRef.set({
+        'year': widget.seasonYear,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-      await seasonRef.collection('drivers').doc(driverId).set(
-        {
-          'name': driverName,
-          'teamId': teamId,
-          'points': 0,
-          'updatedAt': FieldValue.serverTimestamp(),
-          'createdAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await seasonRef.collection('drivers').doc(driverId).set({
+        'name': driverName,
+        'teamId': teamId,
+        'points': 0,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-      await seasonRef.collection('teams').doc(teamId).set(
-        {
-          'name': teamName,
-          'points': 0,
-          'updatedAt': FieldValue.serverTimestamp(),
-          'createdAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await seasonRef.collection('teams').doc(teamId).set({
+        'name': teamName,
+        'points': 0,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -267,7 +267,7 @@ class _RosterAddDialogState extends State<_RosterAddDialog> {
               builder: (context, snap) {
                 final docs = snap.data?.docs ?? const [];
                 return DropdownButtonFormField<String>(
-                  value: _selectedDriverId,
+                  initialValue: _selectedDriverId,
                   items: [
                     for (final d in docs)
                       DropdownMenuItem(
@@ -291,7 +291,7 @@ class _RosterAddDialogState extends State<_RosterAddDialog> {
               builder: (context, snap) {
                 final docs = snap.data?.docs ?? const [];
                 return DropdownButtonFormField<String>(
-                  value: _selectedTeamId,
+                  initialValue: _selectedTeamId,
                   items: [
                     for (final d in docs)
                       DropdownMenuItem(
@@ -331,7 +331,8 @@ class _RosterAddDialogState extends State<_RosterAddDialog> {
               }
             }
             final driverName =
-                (driverDoc?.data()['name'] as String?) ?? (_selectedDriverId ?? '');
+                (driverDoc?.data()['name'] as String?) ??
+                (_selectedDriverId ?? '');
 
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: teamsStream,
@@ -344,10 +345,13 @@ class _RosterAddDialogState extends State<_RosterAddDialog> {
                   }
                 }
                 final teamName =
-                    (teamDoc?.data()['name'] as String?) ?? (_selectedTeamId ?? '');
+                    (teamDoc?.data()['name'] as String?) ??
+                    (_selectedTeamId ?? '');
 
                 final canSave =
-                    !_saving && (_selectedDriverId ?? '').isNotEmpty && (_selectedTeamId ?? '').isNotEmpty;
+                    !_saving &&
+                    (_selectedDriverId ?? '').isNotEmpty &&
+                    (_selectedTeamId ?? '').isNotEmpty;
                 return FilledButton(
                   onPressed: canSave ? () => _save(driverName, teamName) : null,
                   child: Text(_saving ? 'Čuvam...' : 'Sačuvaj'),
