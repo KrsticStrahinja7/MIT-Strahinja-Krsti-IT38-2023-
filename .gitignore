@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+ # Firebase Functions / Node
+ functions/node_modules/
+
+ # Firebase Emulator data exports
+ firebase-data/
+ firebase-export-*/
+ firestore-debug.log
